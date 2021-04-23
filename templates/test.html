@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Тест</h1>
+<form action="" method="post">
+{% for i, item in enumerate_tasks %}
+    <div class="taskField">
+        <div class="question">
+            <b>{{i + 1}}. {{item.question}}</b>
+        </div>
+        <div class="literature_text">
+            <i>{{item.text}}</i>
+        </div>
+        <br>
+        <input class="answer_window" type={{ item.answer_type }} size="40">
+    </div>
+    <br>
+    <br>
+{% endfor %}
+    <input type="submit" name="submit_button" value="Сдать!">
+</form>
+{% endblock %}

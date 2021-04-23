@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<br>
+<form action="" method="post">
+{% for kind in TaskTypes.keys() %}
+    <h4><b>{{ kind }}</b></h4>
+    <ul>
+        {% for typ, num in TaskTypes[kind] %}
+            <li>
+                <p>
+                {{typ}}
+                    <input type="number" class="number_of_tasks" name="{{ typ }}" value="0" min="0" max={{num}}>
+                </p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+    <input type="submit" name="submit_button" value="Create">
+    </form>
+{% endblock %}

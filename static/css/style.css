@@ -1,0 +1,22 @@
+.number_of_tasks{
+    width:50px;
+    height: 30px;
+}
+
+.literature_text{
+    font-family: "Times New Roman";
+    font-weight: normal;
+}
+
+.question{
+    font-family: Arial
+}
+
+.answer_window{
+
+}
+
+.taskField{
+    background-color: #F6F6FF;
+    width: 800px;
+}
