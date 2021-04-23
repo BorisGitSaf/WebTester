@@ -6,7 +6,7 @@ from data.users import User
 from data.tasks import Task
 from data.task_kinds import Task_Kinds
 from pickle import loads, dumps
-from random import shuffle
+from random import shuffle, randint
 
 app = Flask(__name__)
 with open('config/key.txt', 'r') as key:
@@ -146,8 +146,16 @@ def test(ojo, fase):
     elif request.method == 'POST':
         if request.form['submit_button'] == 'Go Home':
             return redirect(url_for("index"))
+        right = 0
         if request.form['submit_button'] == 'Сдать!':
-            return 'nice'
+            for i in range(len(tasks)):
+                db_sess = db_session.create_session()
+                task = db_sess.query(Task).filter(Task.id == tasks[i].id).first()
+                tasks[i] = (i, task, request.form[str(i)], loads(task.answers))
+                if request.form[str(i)] in loads(task.answers):
+                    right += 1
+            return render_template('testDone.html', title='Результаты',
+                        done_tasks=tasks, result=round(right * 100 / len(tasks), 1))
 
 a = ''
 if __name__ == '__main__':

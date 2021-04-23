@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Результаты</h1>
+<form action="" method="post">
+{% for i, item, answer, right_answers in done_tasks %}
+    <div class="taskField">
+        <div class="question">
+            <b>{{i + 1}}. {{item.question}}</b>
+        </div>
+        <div class="literature_text">
+            <i>{{item.text}}</i>
+        </div>
+        <br>
+        {% if answer in right_answers %}
+            <div background="#FFF5FF">
+                <p class="Rans"><b class="question">Ваш ответ: </b> {{answer}} </p>
+                <p><b class="question">Правильный ответ: </b> {{right_answers[0]}}</p>
+            </div>
+        {% elif answer not in right_answers %}
+            <div background="#F5FFFF">
+                <p class="Wans"><b class="question">Ваш ответ: </b> {{answer}}</p>
+                <p><b class="question">Правильный ответ: </b> {{right_answers[0]}}</p>
+            </div>
+        {% endif %}
+    </div>
+    <br>
+    <br>
+{% endfor %}
+    {% if result == 100 %}
+        <div class=result style="background-color:#82E0AA" align="center"><h3>Идеально! 100%</h3></div>
+    {% elif result > 90 %}
+        <div class=result style="background-color:#ABEBC6" align="center"><h3>Отлично! {{ result }}%</h3></div>
+    {% elif result > 60 %}
+        <div class=result style="background-color:#FCF3CF" align="center"><h3>Хорошая работа! {{ result }}%</h3></div>
+    {% elif result > 50 %}
+        <div class=result style="background-color:#FEF5E7" align="center"><h3>Неплохо! {{ result }}%</h3></div>
+    {% else %}
+        <div class=result style="background-color:#EAEDED" align="center"><h3>Результат: {{ result }}%</h3></div>
+    {% endif %}
+    <br>
+    <input class="OkButton" align="center" type="submit" name="submit_button" value="Ясно">
+</form>
+{% endblock %}

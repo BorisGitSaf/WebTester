@@ -1,3 +1,13 @@
+.Wans{
+    color: black;
+    background-color: lightcoral;
+}
+
+.Rans{
+    color: black;
+    background-color: greenyellow;
+}
+
 .number_of_tasks{
     width:50px;
     height: 30px;
@@ -9,7 +19,8 @@
 }
 
 .question{
-    font-family: Arial
+    font-family: Arial;
+    color: black;
 }
 
 .answer_window{
@@ -19,4 +30,20 @@
 .taskField{
     background-color: #F6F6FF;
     width: 800px;
+}
+
+.OkButton{
+    color: white;
+    font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+    font-size: 1.8vw;
+    border-color: white;
+    background-color: lightskyblue;
+    width: 180px;
+    height: 80px;
+    outline-color: white;
+}
+
+.result{
+    width: 800px;
+    height: 40px;
 }
