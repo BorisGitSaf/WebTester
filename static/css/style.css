@@ -1,3 +1,24 @@
+header{
+    background-color: lightskyblue;
+    width: available;
+    height: 60px;
+}
+
+a[href^="mailto"]::after {
+    content: '\1F4E9'
+}
+
+.elem_of_header{
+    color:white;
+    text-align: center;
+    font-size: 1.2vw;
+    background-color: lightskyblue;
+    width: 86px;
+    height: 56px;
+    margin-top: 2px;
+    margin-left: 2px;
+}
+
 .Wans{
     color: black;
     background-color: lightcoral;
@@ -40,10 +61,21 @@
     background-color: lightskyblue;
     width: 180px;
     height: 80px;
+    margin-bottom: 30px;
     outline-color: white;
 }
 
 .result{
     width: 800px;
     height: 40px;
+}
+
+.doneButton{
+    width: 120px;
+    height: 48px;
+    font-size: 1.2vw;
+    background-color: lightskyblue;
+    margin-bottom: 30px;
+    border-color: white;
+    color: white;
 }

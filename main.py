@@ -8,6 +8,12 @@ from data.task_kinds import Task_Kinds
 from pickle import loads, dumps
 from random import shuffle, randint
 
+HOME = 'Домой'
+CREATE = 'Создать'
+DONE = 'Сдать!'
+AGREED = 'Ясно'
+HERE = "сюда!"
+
 app = Flask(__name__)
 with open('config/key.txt', 'r') as key:
     app.config['SECRET_KEY'] = key.readline()
@@ -15,12 +21,35 @@ with open('config/key.txt', 'r') as key:
 @app.route('/')
 @app.route('/index',  methods=['POST', 'GET'])
 def index():
-    return render_template('index.html', title='home')
+    visits_count = session.get('visits_count', 0)
+    session['visits_count'] = visits_count + 1
+    kwargs = {}
+    with open("config/open pass.txt") as f:
+        kwargs['open_email'] = 'mailto:' + f.readline()
+    kwargs['after1'] = "Если Вы хотите создать задания или предложить какие-либо улучшения сайта"
+    kwargs['after2'] = "Почта админа"
+    if visits_count == 1:
+        kwargs['first_frase'] = "Приветствуем"
+        kwargs['about1'] = "Этот сайт существует для создания и решений тестов"
+        kwargs['about2'] = "Если Вы хотите пройти один из тестов, то кликните"
+    else:
+        kwargs['first_frase'] = "Получается?"
+        kwargs['about1'] = "Если продолжать усердствовать, старания окупаются"
+        kwargs['about2'] = "Хотите пройти тест? Кликните"
+    if request.method == 'GET':
+        print(0)
+        return render_template('index.html', title='home', **kwargs)
+    elif request.method == 'POST':
+        print(1)
+        if request.form['submit_button'] == HOME:
+            return redirect(url_for("index"))
+        if request.form['submit_button'] == HERE:
+            return redirect(url_for("testBuild"))
 
 @app.route('/base', methods=['POST', 'GET'])
 def base():
     if request.method == 'POST':
-       if request.form['submit_button'] == 'Go Home':
+       if request.form['submit_button'] == HOME:
            return redirect(url_for("index"))
     elif request.method == 'GET':
         return render_template('base.html', title='base')
@@ -91,40 +120,24 @@ def testBuild():
         joj[i.name] = list(map(lambda x: (x, db_sess.query(Task).filter(Task.type == x).count()), loads(i.type)))
 
     if request.method == 'POST':
-        if request.form['submit_button'] == 'Go Home':
+        if request.form['submit_button'] == HOME:
             return redirect(url_for("index"))
-        if request.form['submit_button'] == 'Create':
+        if request.form['submit_button'] == CREATE:
             ojo = {}
             fase='test'
+            f = False
             for kind in joj.keys():
                 for s in joj[kind]:
                     ojo[s[0]] = request.form[s[0]]
-            return redirect(url_for("test", ojo=ojo, fase=fase))
+                    if request.form[s[0]] != '0':
+                        f = True
+            if f:
+                return redirect(url_for("test", ojo=ojo, fase=fase))
+        return render_template('testBuild.html', title='Составить тест',
+                                TaskTypes=joj, create=CREATE)
     elif request.method == 'GET':
         return render_template('testBuild.html', title='Составить тест',
-                           TaskTypes=joj)
-
-@app.route("/cookie_test")
-def cookie_test():
-    visits_count = int(request.cookies.get("visits_count", 0))
-    if visits_count:
-        res = make_response(
-            f"Вы пришли на эту страницу {visits_count + 1} раз")
-        res.set_cookie("visits_count", str(visits_count + 1),
-                       max_age=60 * 60 * 24 * 365 * 2)
-    else:
-        res = make_response(
-            "Вы пришли на эту страницу в первый раз за последние 2 года")
-        res.set_cookie("visits_count", '1',
-                       max_age=60 * 60 * 24 * 365 * 2)
-    return res
-
-@app.route("/session_test")
-def session_test():
-    visits_count = session.get('visits_count', 0)
-    session['visits_count'] = visits_count + 1
-    return make_response(
-        f"Вы пришли на эту страницу {visits_count + 1} раз")
+                           TaskTypes=joj, create=CREATE)
 
 @app.route('/test/<ojo>/<fase>', methods=['POST', 'GET'])
 def test(ojo, fase):
@@ -141,26 +154,28 @@ def test(ojo, fase):
             shuffle(task_of_type)
             tasks.extend(task_of_type)
     if request.method == 'GET':
-        return render_template('test.html', title='Тест',
+        return render_template('test.html', title='Тест', done=DONE,
                         enumerate_tasks=enumerate(tasks))
     elif request.method == 'POST':
-        if request.form['submit_button'] == 'Go Home':
+        if request.form['submit_button'] == HOME:
             return redirect(url_for("index"))
         right = 0
-        if request.form['submit_button'] == 'Сдать!':
+        if request.form['submit_button'] == DONE:
             for i in range(len(tasks)):
                 db_sess = db_session.create_session()
                 task = db_sess.query(Task).filter(Task.id == tasks[i].id).first()
                 tasks[i] = (i, task, request.form[str(i)], loads(task.answers))
                 if request.form[str(i)] in loads(task.answers):
                     right += 1
-            return render_template('testDone.html', title='Результаты',
+            return render_template('testDone.html', title='Результаты', agreed=AGREED,
                         done_tasks=tasks, result=round(right * 100 / len(tasks), 1))
+        if request.form['submit_button'] == AGREED:
+            return redirect(url_for("index"))
 
 a = ''
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")
     app.run(port=8000, host='127.0.0.1')
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(
-        days=365
+        days=14
     )

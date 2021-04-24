@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1><b>Привет, страница!</b></h1>
+<form action="" method="post">
+<body background="/static/img/main_background.png">
+    <h1><b>{{first_frase}}</b></h1>
+    <br>
+    <br>
+    <br>
+    <br>
+    <h3>{{about1}}</h3>
+    <p>
+        <h3>{{about2}}</h3>
+        <input class="OkButton" type="submit" name="submit_button" align="center" value="сюда!">
+    </p>
+    <br>
+    <br>
+    <h3>{{after1}}</h3>
+    <p>{{after2}}: <a href={{open_email}}></a>{{open_email[7:]}}</p>
+</body>
+</form>
 {% endblock %}
