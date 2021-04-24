@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="" method="post">
+    <h1>Личный кабинет</h1>
+    <br>
+    <br>
+    <p><h3>{{ user.name }} - {{ {'admin': 'администратор', 'student': 'ученик', 'teacher': 'учитель'}[user.type] }}</h3></p>
+    <p>Почта: <b>{{ user.email }}</b></p>
+    <p class="text">{{ user.about }}</p>
+    <br>
+    <br>
+    {% if user.type == 'admin' %}
+        <h1>Добавить пользователя</h1>
+        <p><input type="radio" name="type" value="teacher"> Учитель<Br>
+        <input type="radio" name="type" value="admin"> Админ</p>
+        <p><input type="email" id="email" style="width: 282px" name="email">
+            <input type="submit" name="submit_button" value="Генерировать ключ"></p>
+        <div style="color: red">{{gener_message}}</div>
+        {% if key %}
+            <h3>{{key}}</h3>
+        {% endif%}
+        <br>
+        <br>
+        <h1>Удалить пользователя</h1>
+        <p><input type="email" style="width: 282px" name="deleteEmail" value={{ deleted }}>
+            <input type="submit"  style="width: 130px" name="submit_button" value="Удалить"></p>
+        {% if proofCode %}
+            <p><h3>Напишите: {{proofCode}}</h3> <input type="text" style="width: 100px" name="proof"></p>
+        {% endif%}
+        <div style="color: red">{{message}}</div>
+    {% elif user.type == 'teacher' %}
+        <h1>Добавить задание</h1>
+    {% elif user.type == 'student' %}
+        <h1></h1>
+    {% endif%}
+    <br>
+    <br>
+    <input type="submit" class="logout" name="submit_button" value="Выйти">
+</form>
+{% endblock %}

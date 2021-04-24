@@ -81,3 +81,12 @@ a[href^="mailto"]::after {
     border-color: white;
     color: white;
 }
+
+.logout{
+    color:white;
+    border-color: white;
+    background-color: #FF2F2F;
+    width: 140px;
+    height: 42px;
+    border-radius: 7px;
+}
