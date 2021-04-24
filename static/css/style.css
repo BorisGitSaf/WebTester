@@ -13,10 +13,12 @@ a[href^="mailto"]::after {
     text-align: center;
     font-size: 1.2vw;
     background-color: lightskyblue;
-    width: 86px;
+    width: auto;
     height: 56px;
-    margin-top: 2px;
+    top: 1px;
+    margin-top: 1px;
     margin-left: 2px;
+    border-color: white;
 }
 
 .Wans{

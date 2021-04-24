@@ -1,12 +1,15 @@
 from flask import Flask, render_template, redirect, request, url_for, make_response, session
-from flask_login import LoginManager
+from flask_login import LoginManager, login_user
 from datetime import timedelta
 from data import db_session
+from data.loginform import LoginForm
+from data.registrateionform import RegistrateForm
 from data.users import User
 from data.tasks import Task
 from data.task_kinds import Task_Kinds
 from pickle import loads, dumps
 from random import shuffle, randint
+from werkzeug.security import generate_password_hash, check_password_hash
 
 HOME = 'Домой'
 CREATE = 'Создать'
@@ -15,8 +18,17 @@ AGREED = 'Ясно'
 HERE = "сюда!"
 
 app = Flask(__name__)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 with open('config/key.txt', 'r') as key:
     app.config['SECRET_KEY'] = key.readline()
+
+@login_manager.user_loader
+def load_user(user_id):
+    db_sess = db_session.create_session()
+    return db_sess.query(User).get(user_id)
 
 @app.route('/')
 @app.route('/index',  methods=['POST', 'GET'])
@@ -60,60 +72,6 @@ def register():
 
 @app.route('/testBuild',  methods=['POST', 'GET'])
 def testBuild():
-    """TaskTypes = {'Пунктуация': {'Сложные предложения': [['Расставьте запятые',
-                                                        'В заключение(1) хочется сказать(2) что я не злой(3) а добрый.',
-                                                        ['23', '32']],
-                                                        ['Расставьте запятые',
-                                                         'Думая об этом(1) хочется сказать(2) что я не злой(3) а добрый.',
-                                                         ['123', '321', '231', '132', '312', '213']]],
-                                'Прямая речь': [['Есть ли прямая речь',
-                                                 'В заключение автор сказал, что он не злой, а добрый.',
-                                                 ['НЕТ', 'Нет']],
-                                                ['Есть ли прямая речь',
-                                                 'В заключение автор сказал что: "я не злой, а добрый".',
-                                                 ['ДА', 'Да']]],
-                                'Двоеточие и тире': [['Поставьте знак',
-                                                     'Я увидел(..) летит птица',
-                                                     [':', 'Двоеточие']]]},
-                 'Орфография': {'Приставка': [['В каких словах пропущена буква "Е"?',
-                                               'пр..обрести; пр..красный; пр..слушаться; пр..школьный',
-                                               ['Прекрасный', 'прекрасный']]]}}
-    user = User()
-    user.name = "Адам"
-    user.about = "Первый учитель"
-    user.email = "email@email.ru"
-    user.type = "teacher"
-    db_sess = db_session.create_session()
-    db_sess.add(user)
-    db_sess.commit()
-
-    task_type = Task_Kinds()
-    task_type.name = 'Пунктуация'
-    task_type.type = dumps(['Сложные предложения', 'Прямая речь', 'Двоеточие и тире'])
-    db_sess = db_session.create_session()
-    db_sess.add(task_type)
-    db_sess.commit()
-    task_type = Task_Kinds()
-    task_type.name = 'Орфография'
-    task_type.type = dumps(['Приставка'])
-    db_sess = db_session.create_session()
-    db_sess.add(task_type)
-    db_sess.commit()
-    for kind in TaskTypes.keys():
-        for typ in TaskTypes[kind].keys():
-            for exer in TaskTypes[kind][typ]:
-
-                task = Task()
-                task.kind = kind
-                task.type = typ
-                task.question = exer[0]
-                task.text = exer[1]
-                task.answers = dumps(exer[2])
-                task.user_id = 1
-                db_sess = db_session.create_session()
-                task.user = db_sess.query(User).filter(User.id == 1).first()
-                db_sess.add(task)
-                db_sess.commit()"""
     joj = {}
     db_sess = db_session.create_session()
     for i in db_sess.query(Task_Kinds).all():
@@ -172,7 +130,78 @@ def test(ojo, fase):
         if request.form['submit_button'] == AGREED:
             return redirect(url_for("index"))
 
-a = ''
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect("/")
+        return render_template('login.html',
+                               message="Неправильный логин или пароль",
+                               form=form)
+    return render_template('login.html', title='Авторизация', form=form)
+
+@app.route('/registrate', methods=['GET', 'POST'])
+def registrate():
+    form = RegistrateForm()
+    with open('config/open pass.txt') as f:
+        open_email = f.readline()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user:
+            return render_template('register.html', title='Регистрация', type='Ученик',
+                                   message='Пользователь уже существует',
+                                   form=form)
+        if form.password1.data != form.password2.data:
+            return render_template('register.html', title='Регистрация', type='Ученик',
+                                   message='Пароли различны',
+                                   form=form)
+        if form.type.data == 'Ученик':
+            user = User()
+            user.name = form.username.data
+            user.about = form.about.data
+            user.email = form.email.data
+            user.set_password(form.password1.data)
+            db_sess = db_session.create_session()
+            db_sess.add(user)
+            db_sess.commit()
+            return form.username.data
+        elif form.type.data == 'Учитель':
+            if form.key.data:
+                pass
+            else:
+                return render_template('register.html', title='Регистрация', type='Учитель', open_email=open_email,
+                                        form=form)
+        elif form.type.data == 'Администратор':
+            if form.key.data:
+                with open('config/admin passes.txt', 'r') as passes:
+                    admins = passes.read().split('\n')
+                    for admin in admins:
+                        email, keyHash = admin.split()
+                        if email == form.email.data:
+                            break
+                if check_password_hash(keyHash, form.key.data):
+                    user = User(name=form.username.data,
+                                about=form.about.data,
+                                email=form.email.data,
+                                type='admin')
+                    user.set_password(form.password1.data)
+                    db_sess = db_session.create_session()
+                    db_sess.add(user)
+                    db_sess.commit()
+            else:
+                return render_template('register.html', title='Регистрация', type='Администратор',
+                                       open_email=open_email, form=form)
+
+        return form.username.data
+    return render_template('register.html', title='Регистрация', type='Ученик', open_email=open_email,
+                           form=form)
+
+
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")
     app.run(port=8000, host='127.0.0.1')
