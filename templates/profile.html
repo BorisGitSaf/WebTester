@@ -31,11 +31,44 @@
         <div style="color: red">{{message}}</div>
     {% elif user.type == 'teacher' %}
         <h1>Добавить задание</h1>
+        <h2>Выбрать тему</h2>
+        {% for kind in tasksDict.keys() %}
+            <h4>{{ kind }}</h4>
+            <ul>
+                {% for type in tasksDict[kind] %}
+                    <li><input type="radio" name="themeOfTask" value="{{ kind + '//' + type}}"> {{ type }}</li>
+                {% endfor %}
+                <li><input type="radio" name="themeOfTask" value="{{ kind }}"> Новая подтема
+                    <input type="text" name="New type old kind"></li>
+            </ul>
+        {% endfor %}
+        <p><input type="radio" name="themeOfTask" value="New kind and type"> Новая тема и подтема
+            <input type="text" name="New kind"><input type="text" name="New type"></p>
+        <br>
+        <h2>Вопрос</h2>
+        <textarea name="question" cols="75" rows="2"></textarea>
+        <br>
+        <h2>Текст</h2>
+        <textarea name="text" cols="75" rows="4"></textarea>
+        <br>
+        <p><h2>Возможные ответы</h2><div> (каждый с новой строки)</div></p>
+        <textarea name="answers" cols="50" rows="5"></textarea>
+        <br>
+        <div style="color: red">{{ message }}</div>
+        <br>
+        <input type="submit"  style="width: 130px" name="submit_button" value="Создать">
     {% elif user.type == 'student' %}
-        <h1></h1>
+        {% if results %}
+            <p><div><h2>Рейтинг: <b>{{ results }}</b></h2></div>
+            <input type="submit"  style="width: 130px" name="submit_button" value="Обнулить"></p>
+        {% else %}
+            <div><h2>Нет решённых заданий</h2> <input type="submit"  style="width: 130px" name="submit_button" value="Приступить"></p></div>
+        {% endif%}
     {% endif%}
     <br>
     <br>
     <input type="submit" class="logout" name="submit_button" value="Выйти">
+    <br>
+    <br>
 </form>
 {% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for, make_response, session
+from flask import Flask, render_template, redirect, request, url_for, session
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from datetime import timedelta
 from data import db_session
@@ -26,6 +26,14 @@ login_manager.init_app(app)
 
 with open('config/key.txt', 'r') as key:
     app.config['SECRET_KEY'] = key.readline()
+
+@app.before_request
+def before_request():
+    global AUTHORIZE
+    if current_user.is_authenticated:
+        AUTHORIZE = 'Профиль'
+    else:
+        AUTHORIZE = 'Авторизация'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -62,19 +70,6 @@ def index():
                 return redirect(url_for("login"))
         if request.form['submit_button'] == HERE:
             return redirect(url_for("testBuild"))
-
-@app.route('/base', methods=['POST', 'GET'])
-def base():
-    if request.method == 'POST':
-       if request.form['submit_button'] == HOME:
-           return redirect(url_for("index"))
-       if request.form['submit_button'] == AUTHORIZE:
-           if AUTHORIZE == 'Профиль':
-               return redirect(url_for("profile"))
-           elif AUTHORIZE == 'Авторизация':
-               return redirect(url_for("login"))
-    elif request.method == 'GET':
-        return render_template('base.html', autho=AUTHORIZE, title='base')
 
 @app.route('/testBuild',  methods=['POST', 'GET'])
 def testBuild():
@@ -135,14 +130,15 @@ def test(ojo, fase):
                 return redirect(url_for("login"))
         right = 0
         if request.form['submit_button'] == DONE:
-            for i in range(len(tasks)):
-                db_sess = db_session.create_session()
-                task = db_sess.query(Task).filter(Task.id == tasks[i].id).first()
-                tasks[i] = (i, task, request.form[str(i)], loads(task.answers))
+            done_tasks = tasks.copy()
+            for i, task in enumerate(tasks):
+                done_tasks[i] = (i, task, request.form[str(i)], loads(task.answers))
                 if request.form[str(i)] in loads(task.answers):
                     right += 1
+            if AUTHORIZE == 'Профиль' and current_user.type == 'student':
+                current_user.container = dumps(loads(current_user.container) + [round(right * 100 / len(tasks), 1)])
             return render_template('testDone.html', title='Результаты', autho=AUTHORIZE, agreed=AGREED,
-                        done_tasks=tasks, result=round(right * 100 / len(tasks), 1))
+                        done_tasks=done_tasks, result=round(right * 100 / len(done_tasks), 1))
         if request.form['submit_button'] == AGREED:
             return redirect(url_for("index"))
 
@@ -201,6 +197,8 @@ def registrate():
         elif form.type.data == 'Администратор' or form.type.data == 'Учитель':
             translate = {'Администратор': 'admin', 'Учитель': 'teacher'}
             if form.key.data:
+                keyHash = ''
+                f = False
                 with open('config/admin passes.txt', 'r') as passes:
                     admins = passes.read().split('\n')
                     for admin in admins:
@@ -208,8 +206,9 @@ def registrate():
                         if type != translate[form.type.data]:
                             continue
                         if email == form.email.data:
+                            f = True
                             break
-                if check_password_hash(keyHash, form.key.data):
+                if check_password_hash(keyHash, form.key.data) and f:
                     user = User(name=form.username.data,
                                 about=form.about.data,
                                 email=form.email.data,
@@ -249,8 +248,20 @@ def logout():
 def profile():
     global PROOF_CODE, AUTHORIZE
 
+    AUTHORIZE = 'Профиль'
+    tasksDict = dict()
+    results = ''
+    if current_user.type == 'teacher':
+        db_sess = db_session.create_session()
+        for item in db_sess.query(Task_Kinds).all():
+            tasksDict[item.name] = loads(item.type)
+    elif current_user.type == 'stusent':
+        if loads(current_user.container):
+            results = loads(current_user.container)
+            results = round(sum(results) / len(results), 2)
     if request.method == "GET":
-        return render_template("profile.html", autho=AUTHORIZE, user=current_user)
+        return render_template("profile.html", autho=AUTHORIZE, user=current_user, results=results,
+                               tasksDict=tasksDict)
     elif request.method == "POST":
         if request.form['submit_button'] == HOME:
             return redirect(url_for("index"))
@@ -259,6 +270,73 @@ def profile():
                 return redirect(url_for("profile"))
             elif AUTHORIZE == 'Авторизация':
                 return redirect(url_for("login"))
+        if request.form['submit_button'] == "Обнулить":
+            if current_user.type == 'student':
+                db_sess = db_session.create_session()
+                current_user.container = dumps([])
+                db_sess.commit()
+            return redirect(url_for("profile"))
+        if request.form['submit_button'] == "Приступить":
+            if current_user.type == 'student':
+                return redirect(url_for("testBuild"))
+            return redirect(url_for("testBuild"))
+
+        if request.form['submit_button'] == "Создать":
+            if request.form.getlist('themeOfTask') and request.form.getlist('answers')[0]:
+                task_atts = {}
+                if '//' in request.form['themeOfTask']:
+                    task_atts['fase'] = 'oldKind oldType'
+                    task_atts['kind'], task_atts['type'] = request.form['themeOfTask'].split('//')
+                elif request.form['themeOfTask'] == "New kind and type":
+                    task_atts['fase'] = 'newKind newType'
+                    if request.form.getlist('New kind')[0] and request.form.getlist('New type')[0]:
+                        task_atts['kind'], task_atts['type'] = request.form['New kind'], request.form['New type']
+                else:
+                    task_atts['fase'] = 'oldKind newType'
+                    if request.form.getlist('New type old kind')[0]:
+                        db_sess = db_session.create_session()
+                        if db_sess.query(Task_Kinds).filter(Task_Kinds.type == request.form['New type old kind'],
+                                                            Task_Kinds.name == request.form['themeOfTask']).first():
+                            return render_template("profile.html", autho=AUTHORIZE, user=current_user,
+                                                   tasksDict=tasksDict, message='Такая подтема уже существует')
+                        task_atts['kind'] = request.form['themeOfTask']
+                        task_atts['type'] = request.form['New type old kind']
+                if not(task_atts.get('kind', False) and task_atts.get('type', False)):
+                    return render_template("profile.html", autho=AUTHORIZE, user=current_user,
+                                           tasksDict=tasksDict,
+                                           message='Подтема задания не отмечена')
+                task_atts['question'] = request.form.getlist('question')[0]
+                task_atts['text'] = request.form.getlist('text')[0]
+                task_atts['answers'] = list(filter(lambda x: x, request.form.getlist('answers')[0].split('\r\n')))
+                if task_atts['fase'] == 'newKind newType':
+                    task_type = Task_Kinds(name=task_atts['kind'], type=dumps([task_atts['type']]))
+                    db_sess = db_session.create_session()
+                    db_sess.add(task_type)
+                    db_sess.commit()
+                if task_atts['fase'] == 'oldKind newType':
+                    db_sess = db_session.create_session()
+                    task_type = db_sess.query(Task_Kinds).filter(Task_Kinds.name == task_atts['kind']).first()
+                    a = loads(task_type.type) + [task_atts['type']]
+                    task_type.type = dumps(a)
+                    db_sess.commit()
+                    db_sess = db_session.create_session()
+                    task_type = db_sess.query(Task_Kinds).filter(Task_Kinds.name == task_atts['kind']).first()
+                task = Task(
+                    kind=task_atts['kind'],
+                    type=task_atts['type'],
+                    question=task_atts['question'],
+                    text=task_atts['text'],
+                    answers=dumps(task_atts['answers']),
+                    user_id=current_user.id
+                )
+                db_sess = db_session.create_session()
+                db_sess.add(task)
+                db_sess.commit()
+
+                return redirect(url_for('profile'))
+            return render_template("profile.html", autho=AUTHORIZE, user=current_user,
+                                   tasksDict=tasksDict, message='Обозначение темы и ответов задания обязательны')
+
         if request.form['submit_button'] == "Генерировать ключ":
             if request.form.getlist('type') and request.form.getlist('email')[0]:
                 db_sess = db_session.create_session()
@@ -317,7 +395,7 @@ def profile():
         if request.form['submit_button'] == "Выйти":
             AUTHORIZE = 'Авторизация'
             return redirect(url_for('logout'))
-    return render_template("profile.html", autho=AUTHORIZE, user=current_user)
+    return render_template("profile.html", autho=AUTHORIZE, tasksDict=tasksDict, user=current_user)
 
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")

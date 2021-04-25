@@ -3,6 +3,7 @@ import sqlalchemy
 from flask_login import UserMixin
 from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
+from pickle import dumps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -20,7 +21,7 @@ class User(SqlAlchemyBase, UserMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     tasks = orm.relation("Task", back_populates='user')
-    container = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True, default=[])
+    container = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True, default=dumps(list()))
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

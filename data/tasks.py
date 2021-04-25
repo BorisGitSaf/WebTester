@@ -13,7 +13,7 @@ class Task(SqlAlchemyBase):
     kind = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("task_kinds.name"),
                              nullable=False)
     type = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("task_kinds.type"),
-                             nullable=True)
+                             nullable=False)
 
     question = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     text = sqlalchemy.Column(sqlalchemy.String, nullable=True)
