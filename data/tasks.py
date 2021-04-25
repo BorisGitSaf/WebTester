@@ -10,9 +10,11 @@ class Task(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    kind = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("task_kinds.name"),
+    kind = sqlalchemy.Column(sqlalchemy.String,
+                             sqlalchemy.ForeignKey("task_kinds.name"),
                              nullable=False)
-    type = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("task_kinds.type"),
+    type = sqlalchemy.Column(sqlalchemy.String,
+                             sqlalchemy.ForeignKey("task_kinds.type"),
                              nullable=False)
 
     question = sqlalchemy.Column(sqlalchemy.String, nullable=True)

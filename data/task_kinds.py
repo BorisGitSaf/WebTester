@@ -1,6 +1,4 @@
 import sqlalchemy
-from sqlalchemy import orm
-
 from .db_session import SqlAlchemyBase
 
 
@@ -12,8 +10,10 @@ class Task_Kinds(SqlAlchemyBase):
     name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
     type = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True)
 
+
 def __str__(self):
     return f"{self.id} - {self.name}"
+
 
 def __repr__(self):
     return f"{self.id} - {self.name}"

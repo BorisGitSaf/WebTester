@@ -12,7 +12,8 @@ class User(SqlAlchemyBase, UserMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    type = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='student')
+    type = sqlalchemy.Column(sqlalchemy.String, nullable=False,
+                             default='student')
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     about = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     email = sqlalchemy.Column(sqlalchemy.String,
@@ -21,7 +22,9 @@ class User(SqlAlchemyBase, UserMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     tasks = orm.relation("Task", back_populates='user')
-    container = sqlalchemy.Column(sqlalchemy.PickleType, nullable=True, default=dumps(list()))
+    container = sqlalchemy.Column(sqlalchemy.PickleType,
+                                  nullable=True,
+                                  default=dumps(list()))
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

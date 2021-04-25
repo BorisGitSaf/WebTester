@@ -8,8 +8,10 @@ class RegistrateForm(FlaskForm):
     username = StringField('Имя', validators=[DataRequired()])
     email = EmailField('Почта', validators=[DataRequired()])
     about = StringField('Немного о себе')
-    type = SelectField('Вид пользователя', choices=['Ученик', 'Учитель', 'Администратор'])
+    type = SelectField('Вид пользователя',
+                       choices=['Ученик', 'Учитель', 'Администратор'])
     key = StringField('Ключ')
     password1 = PasswordField('Пароль', validators=[DataRequired()])
-    password2 = PasswordField('Повторите пароль', validators=[DataRequired()])
+    password2 = PasswordField('Повторите пароль',
+                              validators=[DataRequired()])
     submit = SubmitField('Зарегистрироваться')
