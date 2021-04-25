@@ -136,7 +136,11 @@ def test(ojo, fase):
                 if request.form[str(i)] in loads(task.answers):
                     right += 1
             if AUTHORIZE == 'Профиль' and current_user.type == 'student':
-                current_user.container = dumps(loads(current_user.container) + [round(right * 100 / len(tasks), 1)])
+                a = loads(current_user.container) + [round(right * 100 / len(tasks), 1)]
+                user = current_user
+                db_sess = db_session.create_session()
+                user.container = dumps(a)
+                db_sess.commit()
             return render_template('testDone.html', title='Результаты', autho=AUTHORIZE, agreed=AGREED,
                         done_tasks=done_tasks, result=round(right * 100 / len(done_tasks), 1))
         if request.form['submit_button'] == AGREED:
@@ -250,17 +254,12 @@ def profile():
 
     AUTHORIZE = 'Профиль'
     tasksDict = dict()
-    results = ''
     if current_user.type == 'teacher':
         db_sess = db_session.create_session()
         for item in db_sess.query(Task_Kinds).all():
             tasksDict[item.name] = loads(item.type)
-    elif current_user.type == 'stusent':
-        if loads(current_user.container):
-            results = loads(current_user.container)
-            results = round(sum(results) / len(results), 2)
     if request.method == "GET":
-        return render_template("profile.html", autho=AUTHORIZE, user=current_user, results=results,
+        return render_template("profile.html", autho=AUTHORIZE, user=current_user,
                                tasksDict=tasksDict)
     elif request.method == "POST":
         if request.form['submit_button'] == HOME:
@@ -270,17 +269,11 @@ def profile():
                 return redirect(url_for("profile"))
             elif AUTHORIZE == 'Авторизация':
                 return redirect(url_for("login"))
-        if request.form['submit_button'] == "Обнулить":
-            if current_user.type == 'student':
-                db_sess = db_session.create_session()
-                current_user.container = dumps([])
-                db_sess.commit()
             return redirect(url_for("profile"))
         if request.form['submit_button'] == "Приступить":
             if current_user.type == 'student':
                 return redirect(url_for("testBuild"))
             return redirect(url_for("testBuild"))
-
         if request.form['submit_button'] == "Создать":
             if request.form.getlist('themeOfTask') and request.form.getlist('answers')[0]:
                 task_atts = {}

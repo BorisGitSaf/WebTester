@@ -58,12 +58,7 @@
         <br>
         <input type="submit"  style="width: 130px" name="submit_button" value="Создать">
     {% elif user.type == 'student' %}
-        {% if results %}
-            <p><div><h2>Рейтинг: <b>{{ results }}</b></h2></div>
-            <input type="submit"  style="width: 130px" name="submit_button" value="Обнулить"></p>
-        {% else %}
-            <div><h2>Нет решённых заданий</h2> <input type="submit"  style="width: 130px" name="submit_button" value="Приступить"></p></div>
-        {% endif%}
+            <div><h2>Хотите решить задания?</h2> <input type="submit"  style="width: 130px" name="submit_button" value="Приступить"></p></div>
     {% endif%}
     <br>
     <br>
